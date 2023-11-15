@@ -15,6 +15,11 @@ let currentPage = 1;
 const imageSearch = new ImageSearch();
 let lastSearchQuery = '';
 
+const lightbox = new SimpleLightbox('.gallery a', {
+  captionsData: '',
+  captionDelay: 250,
+});
+
 refs.formElem.addEventListener('submit', renderGallery);
 refs.btnLoadElem.addEventListener('click', onLoadMoreClick);
 refs.formElem.elements.searchQuery.addEventListener('input', handleInputChange);
@@ -28,10 +33,12 @@ async function renderGallery(e) {
 
   if (searchQuery === '') {
     Notiflix.Notify.warning('Please enter a search query.');
+
     return;
   }
   if (searchQuery === lastSearchQuery) {
     Notiflix.Notify.warning('This search query has already been submitted.');
+
     return;
   }
 
@@ -42,17 +49,23 @@ async function renderGallery(e) {
 
     if (data.hits.length === 0) {
       showNoResultsMessage(searchQuery);
+      showLoading(false);
+      hideButton();
+      setTimeout(() => {
+        location.reload(); 
+      }, 2500);
       return;
     }
 
     const markup = articlesTemplate(data.hits);
     refs.galleryElem.innerHTML = markup;
-    initializeLightbox();
     showLoading(false);
     refs.btnLoadElem.removeAttribute('disabled');
     showTotalHitsMessage(data.totalHits);
     showButton();
     lastSearchQuery = searchQuery;
+    lightbox.refresh();
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (error) {
     console.error('Error fetching images:', error);
@@ -64,6 +77,9 @@ function showNoResultsMessage(searchQuery) {
   Notiflix.Notify.info(
     `Sorry, there are no images matching your search query "${searchQuery}". Please try again.`
   );
+  showLoading(false);
+  clearGallery();
+  
 }
 
 function showLoading(isLoading) {
@@ -78,17 +94,13 @@ function showLoading(isLoading) {
 function showButton() {
   refs.btnLoadElem.classList.remove('is-hidden');
 }
+function hideButton() {
+  refs.btnLoadElem.classList.add('is-hidden');
+}
 
 function showError(message) {
   refs.errorElem.textContent = message;
   refs.btnLoadElem.setAttribute('disabled', true);
-}
-
-function initializeLightbox() {
-  new SimpleLightbox('.gallery a', {
-    captionsData: '',
-    captionDelay: 250,
-  });
 }
 
 function showTotalHitsMessage(totalHits) {
@@ -99,17 +111,16 @@ async function onLoadMoreClick(e) {
   e.preventDefault();
 
   const searchQuery = refs.formElem.elements.searchQuery.value.trim();
-
+  currentPage += 1;
   try {
     showLoading(true);
 
     const data = await imageSearch.searchImages(searchQuery, currentPage);
     const markup = articlesTemplate(data.hits);
     refs.galleryElem.insertAdjacentHTML('beforeend', markup);
-    initializeLightbox();
+    lightbox.refresh();
     showLoading(false);
     refs.btnLoadElem.removeAttribute('disabled');
-    currentPage += 1;
 
     if (data.hits.length === 0) {
       refs.btnLoadElem.style.display = 'none';
@@ -170,4 +181,8 @@ function articleTemplate({
 function articlesTemplate(articles) {
   const markup = articles.map(articleTemplate).join('');
   return markup;
+}
+
+function clearGallery() {
+  refs.galleryElem.innerHTML = '';
 }

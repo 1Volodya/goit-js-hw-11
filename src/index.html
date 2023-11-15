@@ -8,7 +8,7 @@
   </head>
   <body>
     <div class="container">
-      <form class="search-form" id="search-form">
+      <form class="search-form">
         <input
           type="text"
           name="searchQuery"
@@ -17,15 +17,15 @@
         />
         <button class="button" type="submit">Search</button>
       </form>
+
       <div class="gallery"></div>
 
-      <p class="loding">Loding</p>
-      <p class="error">Erorr</p>
-      
+      <span class="loading loader is-hidden">L &nbsp; ading</span>
+
       <button
         disabled
         type="button"
-        class="button btn-load"
+        class="button load-more is-hidden"
         data-action="load-more"
       >
         Load More
